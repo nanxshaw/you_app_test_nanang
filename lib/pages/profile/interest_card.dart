@@ -1,4 +1,3 @@
-
 import 'package:flutter/material.dart';
 import 'package:test/component/card_profile.dart';
 
@@ -11,7 +10,7 @@ class InterestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CardProfile(
       color: Color(0xFF0E191F),
-      onEditPressed: () => {},
+      onEditPressed: () => {Navigator.pushNamed(context, '/forminterest')},
       child: Container(
         height: 120,
         padding: EdgeInsets.all(16.0),

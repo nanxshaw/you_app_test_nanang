@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -10,8 +11,12 @@ import 'package:test/component/form_input.dart';
 import 'package:test/component/form_select_box.dart';
 import 'package:intl/intl.dart';
 import 'package:test/component/image_upload.dart';
+import 'package:test/models/user_models.dart';
 
 class AboutCard extends StatefulWidget {
+  final UserModel userData;
+  AboutCard({required this.userData});
+
   @override
   _AboutCardState createState() => _AboutCardState();
 }
@@ -25,16 +30,37 @@ class _AboutCardState extends State<AboutCard> {
   final TextEditingController weightController = TextEditingController();
   String? _selectedGender;
   final List<String> _genderOptions = ['Male', 'Female', 'Other'];
-  bool isEditing = true;
-
+  bool isEditing = false;
   File? _imageFile;
+  String? imageBase64;
   final ImagePicker _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    UserModel userData = widget.userData;
+    nameController.text = userData.data!.name.toString();
+    birthdayController.text = userData.data!.birthday.toString();
+    horoscopeController.text = userData.data!.horoscope.toString();
+    zodiacController.text = userData.data!.zodiac.toString();
+    heightController.text = userData.data!.height.toString();
+    weightController.text = userData.data!.weight.toString();
+    // di api belum ada gender
+    // setState(() {
+    //   _selectedGender = userData.data!
+    // });
+  }
 
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-    setState(() {
-      _imageFile = image != null ? File(image.path) : null;
-    });
+    if (image != null) {
+      List<int> imageBytes = await XFile(image.path).readAsBytes();
+      String base64Image = base64Encode(imageBytes);
+      setState(() {
+        _imageFile =  File(image.path);
+        imageBase64 = base64Image.toString();
+      });
+    }
   }
 
   @override
@@ -103,6 +129,7 @@ class _AboutCardState extends State<AboutCard> {
 
   // main
   Widget _buildCard() {
+    UserModel userData = widget.userData;
     return CardProfile(
       color: Color(0xFF0E191F),
       onEditPressed: () {
@@ -111,7 +138,7 @@ class _AboutCardState extends State<AboutCard> {
         });
       },
       child: Container(
-        height: 120,
+        height: 200,
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -125,10 +152,85 @@ class _AboutCardState extends State<AboutCard> {
               ),
             ),
             SizedBox(height: 8.0),
-            Text(
-              "Add in your your to help others know you better",
-              style: TextStyle(color: Colors.white54),
-            ),
+            // ignore: unnecessary_null_comparison
+            userData != null
+                ? Column(
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            "Birthday:",
+                            style:
+                                TextStyle(color: Colors.white54, fontSize: 13),
+                          ),
+                          Text(
+                            userData.data!.birthday.toString(),
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Text(
+                            "Horoscope:",
+                            style:
+                                TextStyle(color: Colors.white54, fontSize: 13),
+                          ),
+                          Text(
+                            userData.data!.horoscope.toString(),
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Text(
+                            "Zodiac:",
+                            style:
+                                TextStyle(color: Colors.white54, fontSize: 13),
+                          ),
+                          Text(
+                            userData.data!.zodiac.toString(),
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Text(
+                            "Height:",
+                            style:
+                                TextStyle(color: Colors.white54, fontSize: 13),
+                          ),
+                          Text(
+                            userData.data!.height.toString(),
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Text(
+                            "Weight:",
+                            style:
+                                TextStyle(color: Colors.white54, fontSize: 13),
+                          ),
+                          Text(
+                            userData.data!.weight.toString(),
+                            style: TextStyle(color: Colors.white, fontSize: 13),
+                          ),
+                        ],
+                      ),
+                    ],
+                  )
+                : Text(
+                    "Add in your your to help others know you better",
+                    style: TextStyle(color: Colors.white54),
+                  ),
           ],
         ),
       ),
@@ -141,12 +243,21 @@ class _AboutCardState extends State<AboutCard> {
     String birthday = birthdayController.text.toString();
     int height = int.parse(heightController.text);
     int weight = int.parse(weightController.text);
+    String horoscope = horoscopeController.text.toString();
+    String zodiac = zodiacController.text.toString();
     BlocProvider.of<UserBloc>(context).add(UpdateProfileEvent(
       name: name,
       birthday: birthday,
       height: height,
       weight: weight,
+      horoscope: horoscope,
+      zodiac: zodiac,
+      gender: _selectedGender,
+      image: imageBase64
     ));
+    setState(() {
+      isEditing = false;
+    });
   }
 
   // form

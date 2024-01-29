@@ -21,6 +21,7 @@ class Data {
   String? email;
   String? username;
   String? name;
+  String? gender;
   String? birthday;
   String? horoscope;
   String? zodiac;
@@ -48,7 +49,8 @@ class Data {
     zodiac = json['zodiac'];
     height = json['height'];
     weight = json['weight'];
-    interests = json['interests'].cast<String>();
+    interests =
+        json['interests'] != null ? List<String>.from(json['interests']) : null;
   }
 
   Map<String, dynamic> toJson() {

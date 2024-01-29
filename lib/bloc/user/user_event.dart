@@ -14,11 +14,24 @@ class UpdateProfileEvent extends UserEvent {
   final String? birthday;
   final int? height;
   final int? weight;
+  final String? horoscope;
+  final String? zodiac;
   final List<String>? interests;
+  final String? gender;
+  final String? image;
 
   UpdateProfileEvent(
-      {this.name, this.birthday, this.height, this.weight, this.interests});
+      {this.name,
+      this.birthday,
+      this.height,
+      this.weight,
+      this.interests,
+      this.horoscope,
+      this.zodiac,
+      this.gender,
+      this.image,
+      });
 
   @override
-  List<Object?> get props => [name, birthday, height, weight, interests];
+  List<Object?> get props => [name, birthday, height, weight, interests, gender,image];
 }

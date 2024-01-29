@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test/api/api_service.dart';
 import 'package:test/bloc/auth/auth_bloc.dart';
 import 'package:test/bloc/user/user_bloc.dart';
+import 'package:test/pages/interest/form_interest.dart';
 import 'package:test/pages/login.dart';
 import 'package:test/pages/profile.dart';
 import 'package:test/pages/register.dart';
@@ -44,7 +45,7 @@ class MyApp extends StatelessWidget {
           '/login': (context) => Login(),
           '/register': (context) => Register(),
           '/profile': (context) => Profile(),
-          // '/update-profile': (context) => UpdateProfilePage(),
+          '/forminterest': (context) => FormInterest(),
         },
       ),
     );
