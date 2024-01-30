@@ -60,10 +60,7 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         },
         headers: headers,
       );
-      print(response);
-      print(response.statusCode);
       if (response.statusCode == 200 || response.statusCode == 201) {
-        print(event);
         sharedPreferences.setString('gender', event.gender.toString());
         sharedPreferences.setString('image64', event.image.toString());
         final res = await apiService.request(
@@ -71,7 +68,6 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           method: 'GET',
           headers: headers,
         );
-        print(res);
         final UserModel data = UserModel.fromJson(res.data);
         emit(ProfileSuccess(user: data, gender: event.gender, image: event.image));
       } else {

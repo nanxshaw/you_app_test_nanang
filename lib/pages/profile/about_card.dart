@@ -44,9 +44,6 @@ class _AboutCardState extends State<AboutCard> {
     UserModel userData = widget.userData;
     nameController.text =
         userData.data!.name != null ? userData.data!.name.toString() : '';
-    birthdayController.text = userData.data!.birthday != null
-        ? userData.data!.birthday.toString()
-        : '';
     horoscopeController.text = userData.data!.horoscope != null
         ? userData.data!.horoscope.toString()
         : '';
@@ -60,6 +57,12 @@ class _AboutCardState extends State<AboutCard> {
     if (userData.data!.birthday != null) {
       DateTime parsedDate =
           DateFormat('dd-MM-yyyy').parse(userData.data!.birthday.toString());
+
+      String bd = DateFormat('dd MM yyyy').format(parsedDate);
+      birthdayController.text = userData.data!.birthday != null
+        ? bd
+        : '';
+   
       DateTime birthDate =
           DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
       ages = calculateAge(birthDate);
@@ -289,6 +292,9 @@ class _AboutCardState extends State<AboutCard> {
     DateTime parsedDate = DateFormat('dd MM yyyy').parse(birthday);
     String dateValue = DateFormat('dd-MM-yyyy').format(parsedDate);
     if (isCreate == true) {
+      setState(() {
+        isCreate = false;
+      });
       BlocProvider.of<UserBloc>(context).add(CreateProfileEvent(
           name: name,
           birthday: dateValue,
