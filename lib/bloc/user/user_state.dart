@@ -33,8 +33,10 @@ class RegisterFailure extends UserState {
 
 class ProfileSuccess extends UserState {
   final UserModel user;
+  final String? image;
+  final String? gender;
 
-  ProfileSuccess({required this.user});
+  ProfileSuccess({required this.user,this.image,this.gender});
 
   @override
   List<Object?> get props => [user];

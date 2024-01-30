@@ -66,4 +66,5 @@ class Data {
     data['interests'] = this.interests;
     return data;
   }
+  
 }

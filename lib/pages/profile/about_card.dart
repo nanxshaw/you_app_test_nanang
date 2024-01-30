@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test/bloc/user/user_bloc.dart';
 import 'package:test/component/card_profile.dart';
 import 'package:test/component/form_date.dart';
@@ -31,6 +32,8 @@ class _AboutCardState extends State<AboutCard> {
   String? _selectedGender;
   final List<String> _genderOptions = ['Male', 'Female', 'Other'];
   bool isEditing = false;
+  int ages = 0;
+  bool isCreate = true;
   File? _imageFile;
   String? imageBase64;
   final ImagePicker _picker = ImagePicker();
@@ -39,16 +42,40 @@ class _AboutCardState extends State<AboutCard> {
   void initState() {
     super.initState();
     UserModel userData = widget.userData;
-    nameController.text = userData.data!.name.toString();
-    birthdayController.text = userData.data!.birthday.toString();
-    horoscopeController.text = userData.data!.horoscope.toString();
-    zodiacController.text = userData.data!.zodiac.toString();
-    heightController.text = userData.data!.height.toString();
-    weightController.text = userData.data!.weight.toString();
-    // di api belum ada gender
-    // setState(() {
-    //   _selectedGender = userData.data!
-    // });
+    nameController.text =
+        userData.data!.name != null ? userData.data!.name.toString() : '';
+    birthdayController.text = userData.data!.birthday != null
+        ? userData.data!.birthday.toString()
+        : '';
+    horoscopeController.text = userData.data!.horoscope != null
+        ? userData.data!.horoscope.toString()
+        : '';
+    zodiacController.text =
+        userData.data!.zodiac != null ? userData.data!.zodiac.toString() : '';
+    heightController.text =
+        userData.data!.height != null ? userData.data!.height.toString() : '';
+    weightController.text =
+        userData.data!.weight != null ? userData.data!.weight.toString() : '';
+    _loadPreferences();
+    if (userData.data!.birthday != null) {
+      DateTime parsedDate =
+          DateFormat('dd-MM-yyyy').parse(userData.data!.birthday.toString());
+      DateTime birthDate =
+          DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+      ages = calculateAge(birthDate);
+    }
+    setState(() {
+      isCreate = userData.data!.name != null ? false : true;
+    });
+  }
+
+  Future<void> _loadPreferences() async {
+    SharedPreferences preferences = await SharedPreferences.getInstance();
+    String? gender = preferences.getString('gender');
+
+    setState(() {
+      _selectedGender = gender;
+    });
   }
 
   Future<void> _pickImage() async {
@@ -57,7 +84,7 @@ class _AboutCardState extends State<AboutCard> {
       List<int> imageBytes = await XFile(image.path).readAsBytes();
       String base64Image = base64Encode(imageBytes);
       setState(() {
-        _imageFile =  File(image.path);
+        _imageFile = File(image.path);
         imageBase64 = base64Image.toString();
       });
     }
@@ -127,6 +154,18 @@ class _AboutCardState extends State<AboutCard> {
     return shioList[shioIndex];
   }
 
+  int calculateAge(DateTime birthDate) {
+    DateTime currentDate = DateTime.now();
+    int age = currentDate.year - birthDate.year;
+    if (currentDate.month < birthDate.month ||
+        (currentDate.month == birthDate.month &&
+            currentDate.day < birthDate.day)) {
+      age--;
+    }
+
+    return age;
+  }
+
   // main
   Widget _buildCard() {
     UserModel userData = widget.userData;
@@ -138,7 +177,6 @@ class _AboutCardState extends State<AboutCard> {
         });
       },
       child: Container(
-        height: 200,
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -153,7 +191,7 @@ class _AboutCardState extends State<AboutCard> {
             ),
             SizedBox(height: 8.0),
             // ignore: unnecessary_null_comparison
-            userData != null
+            userData.data!.name != null
                 ? Column(
                     children: [
                       Row(
@@ -164,7 +202,10 @@ class _AboutCardState extends State<AboutCard> {
                                 TextStyle(color: Colors.white54, fontSize: 13),
                           ),
                           Text(
-                            userData.data!.birthday.toString(),
+                            userData.data!.birthday.toString() +
+                                '(Age ' +
+                                ages.toString() +
+                                ')',
                             style: TextStyle(color: Colors.white, fontSize: 13),
                           ),
                         ],
@@ -239,22 +280,35 @@ class _AboutCardState extends State<AboutCard> {
 
   //save data
   saveProfile() {
-    String name = nameController.text.toString();
-    String birthday = birthdayController.text.toString();
+    String name = nameController.text;
+    String birthday = birthdayController.text;
     int height = int.parse(heightController.text);
     int weight = int.parse(weightController.text);
-    String horoscope = horoscopeController.text.toString();
-    String zodiac = zodiacController.text.toString();
-    BlocProvider.of<UserBloc>(context).add(UpdateProfileEvent(
-      name: name,
-      birthday: birthday,
-      height: height,
-      weight: weight,
-      horoscope: horoscope,
-      zodiac: zodiac,
-      gender: _selectedGender,
-      image: imageBase64
-    ));
+    String horoscope = horoscopeController.text;
+    String zodiac = zodiacController.text;
+    DateTime parsedDate = DateFormat('dd MM yyyy').parse(birthday);
+    String dateValue = DateFormat('dd-MM-yyyy').format(parsedDate);
+    if (isCreate == true) {
+      BlocProvider.of<UserBloc>(context).add(CreateProfileEvent(
+          name: name,
+          birthday: dateValue,
+          height: height,
+          weight: weight,
+          horoscope: horoscope,
+          zodiac: zodiac,
+          gender: _selectedGender,
+          image: imageBase64));
+    } else {
+      BlocProvider.of<UserBloc>(context).add(UpdateProfileEvent(
+          name: name,
+          birthday: dateValue,
+          height: height,
+          weight: weight,
+          horoscope: horoscope,
+          zodiac: zodiac,
+          gender: _selectedGender,
+          image: imageBase64));
+    }
     setState(() {
       isEditing = false;
     });

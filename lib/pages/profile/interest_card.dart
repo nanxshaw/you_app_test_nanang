@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:test/component/card_profile.dart';
 
 class InterestCard extends StatelessWidget {
-  final List<String> interests;
+  final List<String>? interests;
 
   InterestCard({required this.interests});
 
@@ -10,9 +10,14 @@ class InterestCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return CardProfile(
       color: Color(0xFF0E191F),
-      onEditPressed: () => {Navigator.pushNamed(context, '/forminterest')},
+      onEditPressed: () => {
+        Navigator.pushNamed(
+          context,
+          '/forminterest',
+          arguments: interests,
+        )
+      },
       child: Container(
-        height: 120,
         padding: EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -26,13 +31,26 @@ class InterestCard extends StatelessWidget {
               ),
             ),
             SizedBox(height: 8.0),
-            Text("Add in your interest to find a better match",
-                style: TextStyle(color: Colors.white54)),
-            // Column(
-            //   children: interests.map((interest) {
-            //     return Text(interest, style: TextStyle(color: Colors.white54));
-            //   }).toList(),
-            // ),
+            interests!.length > 0 
+                ? Wrap(
+                    spacing: 10.0,
+                    runSpacing: 10.0,
+                    children: interests!.map((interest) {
+                      return Container(
+                        padding: EdgeInsets.fromLTRB(15, 7, 15, 7),
+                        decoration: BoxDecoration(
+                          color: Color(0xff1a252a),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          interest,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      );
+                    }).toList(),
+                  )
+                : Text("Add in your interest to find a better match",
+                    style: TextStyle(color: Colors.white54)),
           ],
         ),
       ),

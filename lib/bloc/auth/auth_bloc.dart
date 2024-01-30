@@ -36,9 +36,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           'user',
           jsonEncode(
             {
-              'email': "test123@test.com",
-              'username': 'test123',
-              'password': 'testing123',
+              'email': event.email,
+              'username': event.username,
+              'password': event.password,
             },
           ),
         );

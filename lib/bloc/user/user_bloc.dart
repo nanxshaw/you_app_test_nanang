@@ -1,3 +1,4 @@
+
 import 'package:bloc/bloc.dart';
 import 'package:equatable/equatable.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +15,9 @@ class UserBloc extends Bloc<UserEvent, UserState> {
   UserBloc({required this.apiService, required this.sharedPreferences})
       : super(UserInitial()) {
     on<GetProfileEvent>(_mapGetProfileEventToState);
+    on<CreateProfileEvent>(_mapCreateProfileEventToState);
     on<UpdateProfileEvent>(_mapUpdateProfileEventToState);
+    on<UpdateInterestEvent>(_mapUpdateInterestEventToState);
   }
 
   _mapGetProfileEventToState(
@@ -28,13 +31,54 @@ class UserBloc extends Bloc<UserEvent, UserState> {
         headers: headers,
       );
       if (response.statusCode == 200) {
+        final gender = sharedPreferences.getString("gender");
+        final image = sharedPreferences.getString('image64');
         final UserModel data = UserModel.fromJson(response.data);
-        emit(ProfileSuccess(user: data));
+        emit(ProfileSuccess(user: data, gender: gender, image: image));
       } else {
         emit(ProfileFailure(error: 'Gagal get profile'));
       }
     } catch (e) {
       emit(ProfileFailure(error: 'Gagal get profile. $e'));
+    }
+  }
+
+  _mapCreateProfileEventToState(
+      CreateProfileEvent event, Emitter<UserState> emit) async {
+    try {
+      final token = sharedPreferences.getString('token');
+      final headers = {'x-access-token': token};
+      final response = await apiService.request(
+        'createProfile',
+        method: 'POST',
+        data: {
+          'name': event.name,
+          'birthday': event.birthday,
+          'height': event.height,
+          'weight': event.weight,
+          'interests': [],
+        },
+        headers: headers,
+      );
+      print(response);
+      print(response.statusCode);
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        print(event);
+        sharedPreferences.setString('gender', event.gender.toString());
+        sharedPreferences.setString('image64', event.image.toString());
+        final res = await apiService.request(
+          'getProfile',
+          method: 'GET',
+          headers: headers,
+        );
+        print(res);
+        final UserModel data = UserModel.fromJson(res.data);
+        emit(ProfileSuccess(user: data, gender: event.gender, image: event.image));
+      } else {
+        emit(UpdateProfileFailure(error: 'Gagal update profile'));
+      }
+    } catch (e) {
+      emit(UpdateProfileFailure(error: 'Gagal update profile. $e'));
     }
   }
 
@@ -51,28 +95,50 @@ class UserBloc extends Bloc<UserEvent, UserState> {
           'birthday': event.birthday,
           'height': event.height,
           'weight': event.weight,
+        },
+        headers: headers,
+      );
+      if (response.statusCode == 200) {
+        sharedPreferences.setString('gender', event.gender.toString());
+        sharedPreferences.setString('image64', event.image.toString());
+        final res = await apiService.request(
+          'getProfile',
+          method: 'GET',
+          headers: headers,
+        );
+        final UserModel data = UserModel.fromJson(res.data);
+        emit(ProfileSuccess(user: data, gender: event.gender, image: event.image));
+      } else {
+        emit(UpdateProfileFailure(error: 'Gagal update profile'));
+      }
+    } catch (e) {
+      emit(UpdateProfileFailure(error: 'Gagal update profile. $e'));
+    }
+  }
+
+  _mapUpdateInterestEventToState(
+      UpdateInterestEvent event, Emitter<UserState> emit) async {
+    try {
+      final token = sharedPreferences.getString('token');
+      final headers = {'x-access-token': token};
+      final response = await apiService.request(
+        'updateProfile',
+        method: 'PUT',
+        data: {
           'interests': event.interests,
         },
         headers: headers,
       );
       if (response.statusCode == 200) {
-        final UserModel json = UserModel.fromJson(response.data);
-        final UserModel data = UserModel.fromJson({
-          "data": {
-            'username':json.data!.username,
-            'name': event.name,
-            'birthday': event.birthday,
-            'height': event.height,
-            'weight': event.weight,
-            'interests': event.interests,
-            "horoscope": event.horoscope,
-            "zodiac": event.zodiac,
-            "gender": event.gender,
-          }
-        });
-        sharedPreferences.setString('gender', event.gender.toString());
-        sharedPreferences.setString('image64', event.image.toString());
-        emit(ProfileSuccess(user: data));
+        final gender = sharedPreferences.getString("gender");
+        final image = sharedPreferences.getString('image64');
+        final res = await apiService.request(
+          'getProfile',
+          method: 'GET',
+          headers: headers,
+        );
+        final UserModel data = UserModel.fromJson(res.data);
+        emit(ProfileSuccess(user: data, gender: gender, image: image));
       } else {
         emit(UpdateProfileFailure(error: 'Gagal update profile'));
       }

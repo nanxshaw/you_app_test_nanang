@@ -3,7 +3,6 @@ import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:test/bloc/user/user_bloc.dart';
 import 'package:test/component/modal_popup.dart';
 import 'package:test/models/user_models.dart';
@@ -18,27 +17,29 @@ class Profile extends StatefulWidget {
 }
 
 class _ProfileSate extends State<Profile> {
-  late String? gender;
-  late String? image64;
+  late String? gender = '';
+  late String? image64 = '';
 
   @override
   void initState() {
     super.initState();
-
+    // getData();
     // request data user
     context.read<UserBloc>().add(GetProfileEvent());
-    getData();
   }
 
-  Future<void> getData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    setState(() {
-      gender = prefs.getString('gender');
-      image64 = prefs.getString('image64');
-    });
-  }
+  // Future<void> getData() async {
+  //   SharedPreferences prefs = await SharedPreferences.getInstance();
+  //   final _gender = prefs.getString('gender');
+  //   final _image64 = prefs.getString('image64');
+  //   if (_gender != null && _image64 != null) {
+  //     setState(() {
+  //       gender = _gender;
+  //       image64 = _image64;
+  //     });
+  //   }
+  // }
 
-  @override
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -46,6 +47,7 @@ class _ProfileSate extends State<Profile> {
         builder: (context, state) {
           if (state is ProfileSuccess) {
             final user = state.user.data;
+            final interest = state.user.data!.interests;
             return Stack(
               children: [
                 // background
@@ -103,13 +105,13 @@ class _ProfileSate extends State<Profile> {
                           children: [
                             ProfileCard(
                               userData: state.user,
-                              gender: gender,
-                              image64: image64,
+                              gender:  state.gender,
+                              image64: state.image,
                             ),
                             SizedBox(height: 10),
                             AboutCard(userData: state.user),
                             SizedBox(height: 10),
-                            InterestCard(interests: ['asd'])
+                            InterestCard(interests: interest)
                           ],
                         ),
                       ),
@@ -160,9 +162,47 @@ class ProfileCard extends StatelessWidget {
 
   ProfileCard({required this.userData, this.gender, this.image64});
 
+  IconData getZodiacIcon(String zodiacSign) {
+    switch (zodiacSign) {
+      case 'Aries':
+        return Icons.adjust;
+      case 'Taurus':
+        return Icons.nature;
+      case 'Gemini':
+        return Icons.dialpad;
+      case 'Cancer':
+        return Icons.beach_access;
+      case 'Leo':
+        return Icons.star;
+      case 'Virgo':
+        return Icons.build;
+      case 'Libra':
+        return Icons.attach_money;
+      case 'Scorpio':
+        return Icons.brightness_3;
+      case 'Sagittarius':
+        return Icons.explore;
+      case 'Capricorn':
+        return Icons.location_city;
+      case 'Aquarius':
+        return Icons.invert_colors;
+      case 'Pisces':
+        return Icons.pool;
+      default:
+        return Icons.help;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    Uint8List bytes = base64Decode(image64.toString());
+    Uint8List? bytes;
+    try {
+      bytes = base64Decode(image64.toString());
+    } catch (e) {
+      print('Error decoding base64 image: $e');
+      bytes = null;
+    }
+    IconData horoscopeIcon = getZodiacIcon(userData.data!.horoscope.toString());
     return Card(
       elevation: 4.0,
       color: Color(0xFF162329),
@@ -170,15 +210,16 @@ class ProfileCard extends StatelessWidget {
         padding: EdgeInsets.all(8.0),
         child: Stack(
           children: [
-            Image.memory(
-              bytes,
-              fit: BoxFit.cover,
-              height: 190,
-              width: double.infinity,
-            ),
-            Container(
-              height: 190,
-            ),
+            image64 != null
+                ? Image.memory(
+                    bytes!,
+                    fit: BoxFit.cover,
+                    height: 190,
+                    width: double.infinity,
+                  )
+                : Container(
+                    height: 190,
+                  ),
             Positioned(
                 bottom: 8.0,
                 left: 8.0,
@@ -192,45 +233,70 @@ class ProfileCard extends StatelessWidget {
                           color: Colors.white,
                           fontWeight: FontWeight.bold),
                     ),
-                    Text(
-                      gender.toString(),
-                      style: TextStyle(
-                        fontSize: 12.0,
-                        color: Colors.white,
-                      ),
+                    gender != null
+                        ? Text(
+                            gender.toString(),
+                            style: TextStyle(
+                              fontSize: 12.0,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Container(),
+                    SizedBox(
+                      height: 5,
                     ),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                          decoration: BoxDecoration(
-                              color: Color(0xFF162329),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white54)),
-                          child: Text(
-                            userData.data!.horoscope.toString(),
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                          decoration: BoxDecoration(
-                              color: Color(0xFF162329),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(color: Colors.white54)),
-                          child: Text(
-                            userData.data!.zodiac.toString(),
-                            style: TextStyle(
-                              fontSize: 12.0,
-                              color: Colors.white,
-                            ),
-                          ),
-                        )
-                      ],
-                    )
+                    userData.data!.horoscope != null &&
+                            userData.data!.zodiac != null
+                        ? Row(
+                            children: [
+                              Container(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                                decoration: BoxDecoration(
+                                    color: Color(0xFF162329),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white54)),
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      horoscopeIcon,
+                                      size: 15,
+                                      color: Colors.white,
+                                    ),
+                                    SizedBox(
+                                      width: 5,
+                                    ),
+                                    Text(
+                                      userData.data!.horoscope.toString(),
+                                      style: TextStyle(
+                                        fontSize: 12.0,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                width: 10,
+                              ),
+                              Container(
+                                padding:
+                                    const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                                decoration: BoxDecoration(
+                                    color: Color(0xFF162329),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white54)),
+                                child: Text(
+                                  userData.data!.zodiac.toString(),
+                                  style: TextStyle(
+                                    fontSize: 12.0,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              )
+                            ],
+                          )
+                        : Container()
                   ],
                 )),
           ],
